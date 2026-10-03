@@ -1,35 +1,75 @@
-# 4D-Menger-Hyper-Sponge
-4D Menger Hyper-Sponge
-
-This Jupyter Notebook contains two code snippets, one that creates 3D Menger sponge and one that deals with the 4D Menger hyper-sponge.
-The Notebook is supplementary material to an article, published on Medium:
-https://medium.com/the-quantastic-journal/how-to-design-a-4d-hyper-fractal-the-magic-menger-hyper-sponge-9e9b3f5184a9
-
-
-# 3D Menger Sponge
-
-Build a 3D Menger sponge (20-cube variant) of recursion depth `level`.
-
-Returns a 3D NumPy boolean array (True = solid, False = removed).
-
-The rule: remove subcubes where >=2 coordinates == 1.
-
-
-
 # 4D Menger Hyper-Sponge
 
-Build a 4D Menger sponge via recursive integer subdivision.
+Two Python scripts construct a 3D Menger sponge and animate 3D slices of a 4D Menger hyper-sponge. They accompany [How to Design a 4D Hyper-Fractal: The Magic Menger Hyper-Sponge](https://medium.com/the-quantastic-journal/how-to-design-a-4d-hyper-fractal-the-magic-menger-hyper-sponge-9e9b3f5184a9).
 
-At each level, the hypercube is subdivided into 3^4 sub-hypercubes.
+## Files
 
-For 4D, we remove those sub-hypercubes in which three or more of the indices equal 1.
+| File | Purpose |
+| --- | --- |
+| `Menger_3D.py` | Construct a 3D Boolean voxel array and display a Matplotlib figure |
+| `Menger_4D.py` | Construct or sample 4D geometry, animate its 3D slices and save an MP4 |
+| `requirements.txt` | Python dependencies |
+| `LICENSE` | MIT licence |
 
-(i.e. we keep a sub-hypercube if the count of ones in (i,j,k,l) is <= 2.)
+The supplied programs are Python scripts. No notebook file is included.
 
-We can choose both the fractal iteration level and the method used to generate the 4D Menger sponge slices; there are two options:
+## Setup
 
-i) The integer method uses the exact, recursive subdivision of the unit hypercube. This builds a 4D boolean array of size $(3^{level})^4$. Slicing that array along the fourth axis gives exact, perfectly symmetric cross‑sections. The function `hyper_menger_sponge_4d_integer`(level) recursively subdivides the hypercube by applying an exact integer indexing.
+Use Python 3. From the repository folder, install the dependencies:
 
-ii) The rational method, where for each 3D slice, the program computes the membership on‑the‑fly by applying exact rational arithmetic with Python's Fraction type. One can choose the 3D resolution $N$ to set how many sample points per axis, and the depth, defined as the number of ternary digits checked, set equal to the iteration level. Because all arithmetic is exact, this minimizes floating‑point artifacts. Noteworthy that here we sample the continuous fractal rather than building its full tensor. Each point $(x,y,z,w)$ is treated as an exact Fraction. The function `in_hyper_menger_4d_rational()` checks the ternary digits exactly (up to the given level) such that the points get classified correctly without floating‑point error. The function `generate_3d_slice_rational()` builds a 3D slice for a given w value by sampling a grid of $N×N×N$ points.
+```bash
+python -m pip install -r requirements.txt
+```
 
-Practically, one can select the method by setting the method parameter to either 'integer' or 'rational'. For the integer method, the fractal's resolution is automatically $(3^{level})$ in each axis; for the rational method, the user must provide a resolution $N$. The function `animate_sponge()` chooses which method to use. For the integer method, it extracts slices from the precomputed 4D tensor; for the rational method, it computes a sequence of 3D slices for w values, uniformly sampled in $[0,1]$.
+The 4D script imports IPython for its optional notebook display expression, so IPython is included in the dependencies even when the script runs from a terminal.
+
+MP4 export also needs a system installation of FFmpeg on `PATH`. Check it with:
+
+```bash
+ffmpeg -version
+```
+
+## Run
+
+Display the 3D sponge:
+
+```bash
+python Menger_3D.py
+```
+
+This opens a Matplotlib plot window. Close the window to finish the program.
+
+Generate the 4D slice animation:
+
+```bash
+python Menger_4D.py
+```
+
+The animation is saved as `menger_4d.mp4` in the current working directory. Running the script again replaces that file.
+
+## Parameters
+
+In `Menger_3D.py`, change `level` in the example at the end of the file. Its default is 3.
+
+In `Menger_4D.py`, the example at the end of the file defines:
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `chosen_level` | `2` | Number of subdivision levels or ternary digits checked |
+| `chosen_method` | `'rational'` | Choose `'integer'` or `'rational'` |
+| `resolution` | `20` | Samples per spatial axis for the rational method |
+| `num_frames` | `10` | Number of requested fourth-coordinate slices |
+
+## Construction methods
+
+The 3D rule removes a subcube when at least two subdivision indices equal 1. It keeps 20 of the 27 subcubes at each level.
+
+The 4D rule removes a sub-hypercube when at least three subdivision indices equal 1. It keeps 72 of the 81 sub-hypercubes at each level.
+
+The integer method recursively builds a Boolean array with shape `(3**level, 3**level, 3**level, 3**level)` and extracts slices along its fourth axis. Memory use grows with the full four-dimensional array. The `resolution` setting does not affect this method.
+
+The rational method samples a spatial grid and checks ternary digits with Python's `Fraction` arithmetic, without constructing the full 4D array. Each fourth-coordinate sample is first converted from a float with `limit_denominator(3**level)`, so different requested frames can use the same resulting rational coordinate.
+
+## Licence
+
+See [LICENSE](LICENSE) for the MIT licence.
